@@ -13,7 +13,7 @@ lib_deps =
 	https://github.com/UncleGrumpy/WiFiQuick.git
 ```
 
-## Usage:
+## *Usage:*
 A growing collection of samples are included. In ArdionoIDE they will show up in the usual menu:
 > File > Examples > WiFiQuick 
 
