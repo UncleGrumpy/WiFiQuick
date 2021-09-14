@@ -19,8 +19,8 @@
 #include <WiFiQuick.h>
 
 
-const char* ssid = "NETGEAR_EXT";
-const char* password = "uncledan";
+const char* ssid = "NETWORK_NAME";
+const char* password = "PASSWORD";
 IPAddress MYip(192, 168, 82, 66);
 IPAddress MYgateway(192, 168, 0, 1);
 IPAddress MYnetmask(255, 255, 0, 0);
