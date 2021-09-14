@@ -62,7 +62,7 @@ void setup() {
   // (default is 10), if a connection is not completed in this time the device will go to
   // sleep and try again after 60 seconds multiplied by the number of missed connections.
 
-  WiFiTimeout(startWifi);
+  WiFiTimeout(startWifi, 15);  // 15 second timeout before giving up on connection.
 
 }
 
