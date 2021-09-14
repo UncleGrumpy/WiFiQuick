@@ -14,7 +14,7 @@ lib_deps =
 ```
 
 ## *Usage*
-A growing collection of samples are included. In ArdionoIDE they will show up in the usual menu:
+A growing collection of samples are included. In ArduinoIDE they will show up in the usual menu:
 > File > Examples > WiFiQuick 
 
 The simplest usage looks like:
