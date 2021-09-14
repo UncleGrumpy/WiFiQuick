@@ -33,3 +33,6 @@
 
 # Backups
 *.backup
+
+# pio artifacts
+library.json

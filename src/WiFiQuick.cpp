@@ -136,29 +136,6 @@ uint32_t WiFiInit(const char* ssid, const char* password) {
     #endif
     WiFi.begin(ssid, password, nv->rtcData.channel, wifiID, true);
   } else {
-    #ifndef MYstaticIP
-    #define NO_STATIC_IP
-    #else
-    staticIP = MYstaticIP;
-    #endif
-    #ifndef MYgateway
-    #define NO_STATIC_IP
-    #else
-    gateway = MYgateway;
-    #endif
-    #ifndef MYsubnet
-    #define NO_STATIC_IP
-    #else
-    subnet = MYsubnet;
-    #endif
-    #ifndef MYdns
-    #define NO_STATIC_IP
-    #else
-    dns = MYdns;
-    #endif
-    #ifndef NO_STATIC_IP
-    WiFi.config(staticIP, gateway, subnet, dns);
-    #endif
     #ifdef WQ_DEBUG
     Serial.print("rtcOK = ");
     Serial.println(rtcOK);
