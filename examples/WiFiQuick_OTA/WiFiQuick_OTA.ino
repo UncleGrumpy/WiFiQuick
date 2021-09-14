@@ -27,8 +27,8 @@
 #endif
 
 
-const char* ssid = "NETGEAR_EXT";
-const char* password = "uncledan";
+const char* ssid = "NETWORK";
+const char* password = "PASSWORD";
 
 uint32_t SleepSecs = 10;    // how long to sleep. 10 seconds default for this demo.
 uint32_t WakeSecs = 120;    // how long to stay awake. 2 minutes default for this demo.
