@@ -1,11 +1,12 @@
 /*
     WiFiQuick_OTA.ino  (c) 2021 Winford (Uncle Grumpy)
 
-    This demo shows how to use WiFiQuick Library to start a wireless connection that will be
-    saved to RTC RAM so that later connections after waking from deep sleep can be completed
-    much faster.  The first connection often takes 8-9 seconds, using this library post-sleep
-    connections can be as fast as 1-2 seconds.
-
+    This demo can be used to test that OTA updates do not disturb the saved WiFiQuick
+    connection info or loss of other data (run counter) saved in RTC RAM.  For devices
+    that do deepSleep it is not likely to do OTA this way, you would more likely download
+    new firmware from an http(s) server but the underlying update mechanism works the same.
+    This really just tests the ability to do OTA without loosing WiFiQuick data.
+    
     WARNING: Make sure your board is set up to wake from DeepSleep! For example...
 
     D1 Mini > connect D0 to RST.
