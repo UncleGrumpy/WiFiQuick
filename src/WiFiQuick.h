@@ -23,7 +23,8 @@
 
 //void WiFiTimeout(uint32_t wifiTime);
 void WiFiTimeout(uint32_t wifiTime, int MaxSecs=10);
-uint32_t WiFiInit(const char* ssid, const char* password);
+//uint32_t WiFiInit(const char* ssid, const char* password);
+uint32_t WiFiInit(const char* ssid, const char* password, IPAddress staticIP=(0,0,0,0), IPAddress gateway=(0,0,0,0), IPAddress subnet=(0,0,0,0), IPAddress dns=(0,0,0,0));
 uint32_t calculateCRC32(const uint8_t *data, size_t length);
 bool rtcValid();
 bool updateRTCcrc();

@@ -34,5 +34,8 @@
 # Backups
 *.backup
 
+#ArduinoIDE artifacts
+tags
+ 
 # pio artifacts
 library.json

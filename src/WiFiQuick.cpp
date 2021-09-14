@@ -17,7 +17,6 @@
 //#include <WiFiClient.h>
 #include <coredecls.h>         // crc32()
 #include "WiFiQuick.h"
-//#include "credentials.h"
 
 #ifdef WQ_DEBUG
 #define WQ_SERIAL
@@ -86,12 +85,75 @@ uint32_t calculateCRC32(const uint8_t *data, size_t length) {
   return crc;
 }
 
-uint32_t WiFiInit(const char* ssid, const char* password) {
+// uint32_t WiFiInit(const char* ssid, const char* password) {
+//   uint32_t startWifi = millis();
+//   IPAddress staticIP;
+//   IPAddress gateway;
+//   IPAddress subnet;
+//   IPAddress dns;
+//   uint8_t wifiID[6];
+
+//   WiFi.forceSleepWake();
+//   delay(1);
+//   WiFi.mode(WIFI_STA);
+//   WiFi.setOutputPower(10);
+//   WiFi.persistent(false);   // Dont's save WiFiState to flash we will store it in RTC RAM later.
+//   if ((rtcValid()) && (nv->rtcData.noWifi == 0)) {
+//     #ifdef WQ_DEBUG
+//     Serial.print("rtcOK = ");
+//     Serial.println(rtcOK);
+//     #endif
+//     for (unsigned int mem = 0; mem < 4; mem++) {
+//       staticIP[mem] = nv->rtcData.myIP[mem];
+//     }
+//     for (unsigned int mem = 0; mem < 4; mem++) {
+//       gateway[mem] = nv->rtcData.wlGateway[mem];
+//     }
+//     for (unsigned int mem = 0; mem < 4; mem++) {
+//       subnet[mem] = nv->rtcData.wlSubNet[mem];
+//     }
+//     for (unsigned int mem = 0; mem < 4; mem++) {
+//       dns[mem] = nv->rtcData.wlDNS[mem];
+//     }
+//     for (unsigned int mem = 0; mem < 6; mem++) {
+//       wifiID[mem] = nv->rtcData.bssid[mem];
+//     }
+//     WiFi.config(staticIP, gateway, subnet, dns);
+//     #ifdef WQ_SERIAL
+//     Serial.println();
+//     Serial.print("Reconnecting to previous network");
+//     #endif
+//     #ifdef WQ_DEBUG
+//     Serial.print(" using channel ");
+//     Serial.print(nv->rtcData.channel);
+//     Serial.print(" and bssid  ");
+//     for (int mem = 0; mem < 6; mem++ ) {
+//       Serial.print(wifiID[mem], HEX);
+//       delay(1);
+//     }
+//     delay(1);
+//     #endif
+//     WiFi.begin(ssid, password, nv->rtcData.channel, wifiID, true);
+//   } else {
+//     #ifdef WQ_DEBUG
+//     Serial.print("rtcOK = ");
+//     Serial.println(rtcOK);
+//     Serial.print("wifiMissed = ");
+//     Serial.println(nv->rtcData.noWifi);
+//     delay(1);
+//     #endif
+//     #ifdef WQ_SERIAL
+//     Serial.println();
+//     Serial.print("Connecting to network");
+//     delay(1);
+//     #endif
+//     WiFi.begin(ssid, password);
+//   }
+//   return startWifi;
+// }
+
+uint32_t WiFiInit(const char* ssid, const char* password, IPAddress staticIP, IPAddress gateway, IPAddress subnet, IPAddress dns) {
   uint32_t startWifi = millis();
-  IPAddress staticIP;
-  IPAddress gateway;
-  IPAddress subnet;
-  IPAddress dns;
   uint8_t wifiID[6];
 
   WiFi.forceSleepWake();
@@ -148,6 +210,7 @@ uint32_t WiFiInit(const char* ssid, const char* password) {
     Serial.print("Connecting to network");
     delay(1);
     #endif
+    WiFi.config(staticIP, gateway, subnet, dns);
     WiFi.begin(ssid, password);
   }
   return startWifi;
