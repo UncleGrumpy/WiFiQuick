@@ -29,5 +29,5 @@ jobs:
       - uses: ArminJo/arduino-test-compile@v3.0.0
         with:
           sketch-names-find-start: examples
-          board: esp8266:esp8266:generic:eesz=4M2M,xtal=80
+          arduino-board-fqbn: esp8266:esp8266:generic:eesz=4M2M,xtal=80
           platform-default-url: https://arduino.esp8266.com/stable/package_esp8266com_index.json
