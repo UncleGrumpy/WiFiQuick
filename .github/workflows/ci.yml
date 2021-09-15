@@ -28,4 +28,4 @@ jobs:
       - uses: arduino/setup-arduino-cli@v1.1.1
       - uses: Legion2/arduino-builder-action@v2.0.0
         with:
-          board: esp8266:esp8266:"Generic ESP8266 Module"
+          board: esp8266:esp8266:generic
