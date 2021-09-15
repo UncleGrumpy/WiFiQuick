@@ -26,5 +26,6 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
       - uses: arduino/arduino-lint-action@v1.0.0
+      - uses: ArminJo/arduino-test-compile@v3.0.0
       
 
