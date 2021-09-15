@@ -7,6 +7,7 @@ This library uses RTC RAM to store all the settings, so it will be saved during 
 ### ArduinoIDE:
 * Clone or download and extract this repository into your Arduino libraries folder.
 ### Platformio:
+* Install or add "winford/WiFiQuick" to your project using the pio library manager.
 * add to project platformio.ini file like:
 ```
 lib_deps = 
