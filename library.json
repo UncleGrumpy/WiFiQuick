@@ -1,0 +1,24 @@
+{
+  "name": "WiFiQuick",
+  "version": "0.1.0",
+  "description": "ESP32/8266 library that painlessly enables incredibly fast re-connect to the previous wireless network after deep sleep.",
+  "keywords": "wifi, deepsleep, battery, iot",
+  "repository":
+  {
+    "type": "git",
+    "url": "https://github.com/UncleGrumpy/WiFiQuick.git"
+  },
+  "authors":
+  [
+    {
+      "name": "Winford (Uncle Grumpy)",
+      "email": "grumpyuncle@protonmail.com",
+      "url": "https://github.com/UncleGrumpy",
+      "maintainer": true
+    }
+  ],
+  "license": "MIT",
+  "homepage": "https://github.com/UncleGrumpy/WiFiQuick",
+  "frameworks": "*",
+  "platforms": "espressif32,espressif8266"
+}
