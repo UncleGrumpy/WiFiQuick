@@ -26,6 +26,7 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
       - uses: arduino/arduino-lint-action@v1.0.0
+      - uses: dark0ghost/arduino_action@v1.1
       - uses: Legion2/arduino-builder-action@v2.0.0
         with:
           # Fully Qualified Board Name
