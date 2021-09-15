@@ -1,7 +1,7 @@
 # WiFiQuick
 ESP32/8266 Platformio/Arduino library that painlessly enables incredibly fast re-connect to the previous wireless network after deep sleep.
 
-This library uses RTC RAM to store all the settings, so it will be saved during sleep as long as power is not lost. This method is much faster than the native ESP-IDF/Arduino one, which saves some of this information in a special segment of flash. Not only is this method faster, but it also eliminates those write cycles, saving flash wear and lowering power consumption.  The biggest time saver is eliminating the need to do a network scan before connection.  A smaller but still not insignificant amount of time is saved by saving the previously issued ip address, gateway, netmask, and dns server so that dhcp is not used for connections after the first time.  If a connection fails the device will sleep for 1 minute for each missed connection in a row.  So if you miss five conections in a row it will wait 5 minutes before attempting to reconnect. This is done to save battery power in case there is a problem with the network, like a power outage and the router is down... no point using up your batteries trying to connect to a router that isn't listening.
+This library uses RTC RAM to store all the settings, so it will be saved during sleep as long as power is not lost. This method is much faster than the native ESP-IDF/Arduino one, which saves some of this information in a special segment of flash. Not only is this method faster, but it also eliminates those write cycles, saving flash wear and lowering power consumption.  The biggest time saver is eliminating the need to do a network scan before connection.  A smaller but still not insignificant amount of time is saved by saving the previously issued ip address, gateway, netmask, and dns server so that dhcp is not used for connections after the first time.  If a connection fails the device will sleep for 1 minute for each missed connection in a row.  So if you miss five connections in a row it will wait 5 minutes before attempting to reconnect. This is done to save battery power in case there is a problem with the network, like a power outage and the router is down... no point using up your batteries trying to connect to a router that isn't listening.
 
 ## *Installation*
 ### ArduinoIDE:
@@ -56,4 +56,4 @@ Make sure your board is set up to wake from DeepSleep! For example...
  *  D1 Mini > connect D0 to RST.
  *  ESP12-F > connect GPIO16 to RST
  *  ESP01 > see here: https://blog.enbiso.com/post/esp-01-deep-sleep/ to make the necessary modifications.
-    * For this mod I personnaly like to use conductive paint and a sharp needle to apply it...
+    * For this mod I personally like to use conductive paint and a sharp needle to apply it...
