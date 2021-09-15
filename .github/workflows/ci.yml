@@ -25,6 +25,6 @@ jobs:
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
-      - uses: Arduino-CI/action@stable-1.x
+      - uses: arduino/arduino-lint-action@v1.0.0
       
 
