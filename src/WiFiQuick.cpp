@@ -53,7 +53,7 @@ uint32_t WiFiQuick::resetCount = 0;
 uint32_t WiFiQuick::_MissedWiFi = 0;
 IPAddress WiFiQuick::_noIP = IPAddress(0,0,0,0);
 uint32_t WiFiQuick::_wlStart = 0;
-uint32_t WiFiQuick::_ConTime = 0;
+uint32_t WiFiQuick::authTimer = 0;
 
 bool WiFiQuick::updateRTCcrc() {  // updates the reset count CRC
   nv->crc = crc32((uint8_t*)&nv->rtcMEM, sizeof(nv->rtcMEM));
@@ -206,10 +206,10 @@ bool WiFiQuick::begin(uint MaxSecs) {
   } else {
     nv->rtcMEM.channel = WiFi.channel();
     #ifdef WQ_SERIAL
-    _ConTime = millis() - _wlStart;
+    authTimer = millis() - _wlStart;
     Serial.println();
     Serial.print("Connected in ");
-    Serial.print(_ConTime);
+    Serial.print(authTimer);
     Serial.println("ms.");
     delay(1);
     #endif

@@ -27,7 +27,6 @@ class WiFiQuick {
     static uint32_t _MissedWiFi;
     static IPAddress _noIP;
     static uint32_t _wlStart;
-    static uint32_t _ConTime;
 
     bool rtcValid(void);
     bool updateRTCcrc(void);
@@ -36,6 +35,7 @@ class WiFiQuick {
 
         static uint32_t resetCount;
         static uint32_t MissedWiFi;
+        static uint32_t authTimer;
 
         uint32_t init(const char* ssid, const char* password);
         uint32_t init(const char* ssid, const char* password, IPAddress staticIP=_noIP, IPAddress gateway=_noIP, IPAddress subnet=_noIP, IPAddress dns=_noIP);
