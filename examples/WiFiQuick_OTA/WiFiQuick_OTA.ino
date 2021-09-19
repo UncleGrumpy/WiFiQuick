@@ -36,6 +36,9 @@ uint32_t WakeSecs = 120;    // how long to stay awake. 2 minutes default for thi
 uint32_t nap = SleepSecs * 1e6;
 uint32_t SleepNow = millis() + (WakeSecs * 1000);
 
+WiFiQuick WiFiQuick;
+
+
 void setup() {
   uint32_t setupStart = millis();
   String resetCause = ESP.getResetReason();
@@ -47,15 +50,18 @@ void setup() {
   delay(1);
   Serial.println(resetCause);
   delay(1);
-  UpdateResetCount();
+  WiFiQuick.UpdateWakes();
   Serial.print("run number ");
-  Serial.println(GetResetCount());
+  Serial.println(WiFiQuick.WakeCount());
   delay(1);
   // you can change this before doing OTA to make sure it changes but the run counter is not reset.
   Serial.println("Firmware Test 1");
   delay(1);
 
-  uint32_t startWifi = WiFiInit(ssid, password); // this starts the wifi connection.
+  // use of the init() function is optional. you can use it to start the wireless connection and
+  // continue with your setup. You should avoid anything time consuming here and use plenty of short
+  // delays to give plenty of time for the wireless to do its thing in the background.
+  WiFiQuick.init(ssid, password); // this starts the wifi connection.
 
   // you can do some other setup stuff that does not reqire a connection here.
 
@@ -64,11 +70,11 @@ void setup() {
 
   // Hostname defaults to esp(8266/32)-[ChipID]
   ArduinoOTA.setHostname("wifiquick_demo");
+  delay(1);
 
-  // Password defaults to none
-  // ArduinoOTA.setPassword("safety-first");
-  // or
-  // ArduinoOTA.setPasswordHash("<MD5-OF-PASSWORD>");
+  // Default is no password.
+  // ArduinoOTA.setPassword("safety-first");  // or ArduinoOTA.setPasswordHash("<MD5-OF-PASSWORD>");
+  // delay(1);
 
   ArduinoOTA.onStart([]() {
     String type;
@@ -102,11 +108,9 @@ void setup() {
     }
   });
 
-  // you must pass the startWifi returned by WiFiInit and an optional timeout in seconds
-  // (default is 10), if a connection is not completed in this time the device will go to
-  // sleep and try again after 60 seconds multiplied by the number of missed connections.
-
-  WiFiTimeout(startWifi, 15);
+  // begin() is always necessary to finalize the connection and store the settings, even if the
+  // connection was started by init() function.
+  WiFiQuick.begin();  // 10 second timeout, supply optional timeout in seconds as a parameter.
 
   ArduinoOTA.begin();
 
@@ -125,6 +129,9 @@ void setup() {
   uint32_t setupTime = millis() - setupStart;
   Serial.print("Setup took ");
   Serial.print(setupTime);
+  Serial.println("ms.");
+  Serial.print("Wifi took ");
+  Serial.print(WiFiQuick::authTimer);
   Serial.println("ms.");
 }
 

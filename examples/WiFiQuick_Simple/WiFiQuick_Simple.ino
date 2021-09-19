@@ -21,12 +21,12 @@
 
 const char* ssid = "NETWORK_NAME";
 const char* password = "PASSWORD";
-
 uint32_t SleepSecs = 20;    // how long to sleep. 20 seconds default for this demo.
+
+WiFiQuick WiFiQuick;
 
 
 void setup() {
-  uint32_t setupStart = millis();
   String resetCause = ESP.getResetReason();
   Serial.begin(115200);
   delay(1000);
@@ -36,28 +36,18 @@ void setup() {
   delay(1);
   Serial.println(resetCause);
   delay(1);
-  UpdateResetCount();
+  WiFiQuick.UpdateWakes();
   Serial.print("run number ");
-  Serial.println(GetResetCount());
+  Serial.println(WiFiQuick.WakeCount());
   delay(1);
   
-  uint32_t startWifi = WiFiInit(ssid, password); // this starts the wifi connection.
-  
-  /*
-   *  you can do some other setup stuff that does not reqire a connection here.
-   */
-
-  // you must pass the startWifi returned by WiFiInit and an optional timeout in seconds
-  // (default is 10), if a connection is not completed in this time the device will go to
-  // sleep and try again after 60 seconds multiplied by the number of missed connections.
-  // this is done so that battery powered devices do not waist power trying to connect to
-  // the network if there is a problem or it isn't there, like during a power outage.
-  /* Without calling this function you should still end up with a working connection, but the
-  // network configs for fast reconnect will not be saved and you will have to perform some 
-  // other check to see if you have a connection yet.
-  */
-
-  WiFiTimeout(startWifi);
+  if (!WiFiQuick.begin(ssid, password, 15)) {
+    Serial.println("WiFi connection Failed!");
+  } else {
+    Serial.print("Connected in ");
+    Serial.print(WiFiQuick::authTimer);
+    Serial.println("ms.");
+  }
 
 }
 

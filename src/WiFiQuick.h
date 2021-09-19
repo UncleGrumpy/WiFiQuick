@@ -37,10 +37,8 @@ class WiFiQuick {
         static uint32_t MissedWiFi;
         static uint32_t authTimer;
 
-        uint32_t init(const char* ssid, const char* password);
         uint32_t init(const char* ssid, const char* password, IPAddress staticIP=_noIP, IPAddress gateway=_noIP, IPAddress subnet=_noIP, IPAddress dns=_noIP);
         bool begin(uint MaxSecs=10);
-        //bool begin(const char* ssid, const char* password, uint MaxSecs=10);
         bool begin(const char* ssid, const char* password, IPAddress staticIP=_noIP, IPAddress gateway=_noIP, IPAddress subnet=_noIP, IPAddress dns=_noIP, uint MaxSecs=10);
         void UpdateWakes(void);
         uint32_t WakeCount(void);
