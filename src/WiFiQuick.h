@@ -27,6 +27,7 @@ class WiFiQuick {
     static uint32_t _MissedWiFi;
     static IPAddress _noIP;
     static uint32_t _wlStart;
+    static uint32_t resetCount;
 
     bool rtcValid(void);
     bool updateRTCcrc(void);
