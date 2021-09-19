@@ -19,17 +19,36 @@
 #endif
 #include <ESP8266WiFi.h>
 #include <coredecls.h>         // crc32()
-//#include "credentials.h"
 
-//void WiFiTimeout(uint32_t wifiTime);
-void WiFiTimeout(uint32_t wifiTime, int MaxSecs=10);
-uint32_t WiFiInit(const char* ssid, const char* password);
-uint32_t WiFiInit(const char* ssid, const char* password, IPAddress staticIP, IPAddress gateway, IPAddress subnet, IPAddress dns);
-uint32_t calculateCRC32(const uint8_t *data, size_t length);
-bool rtcValid();
-bool updateRTCcrc();
-void UpdateResetCount();
-uint32_t GetResetCount();
-byte GetMyMAC();
+
+class WiFiQuick {
+
+    static uint32_t _resetCount;
+    static uint32_t _MissedWiFi;
+    static IPAddress _noIP;
+    static uint32_t _wlStart;
+    static uint32_t _ConTime;
+
+    bool rtcValid(void);
+    bool updateRTCcrc(void);
+
+    public:
+
+        static uint32_t resetCount;
+        static uint32_t MissedWiFi;
+
+        uint32_t init(const char* ssid, const char* password);
+        uint32_t init(const char* ssid, const char* password, IPAddress staticIP=_noIP, IPAddress gateway=_noIP, IPAddress subnet=_noIP, IPAddress dns=_noIP);
+        bool begin(uint MaxSecs=10);
+        //bool begin(const char* ssid, const char* password, uint MaxSecs=10);
+        bool begin(const char* ssid, const char* password, IPAddress staticIP=_noIP, IPAddress gateway=_noIP, IPAddress subnet=_noIP, IPAddress dns=_noIP, uint MaxSecs=10);
+        void UpdateWakes(void);
+        uint32_t WakeCount(void);
+        void ResetWakes(void);
+        uint32_t wifiMissed(void);
+        uint8_t* macAddress(uint8_t* mac);
+        String macAddress(void);
+
+};
 
 #endif
