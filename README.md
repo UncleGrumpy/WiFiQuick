@@ -1,7 +1,7 @@
 # WiFiQuick
 ESP32/8266 Platformio/Arduino library that painlessly enables incredibly fast re-connect to the previous wireless network after deep sleep.
 
-This library uses RTC RAM to store all the settings, so it will be saved during sleep as long as power is not lost. This method is much faster than the native ESP-IDF/Arduino one, which saves some of this information in a special segment of flash. Not only is this method faster, but it also eliminates those write cycles, saving flash wear and lowering power consumption.  The biggest time saver is eliminating the need to do a network scan before connection.  A smaller but still not insignificant amount of time is saved by saving the previously issued ip address, gateway, netmask, and dns server so that dhcp is not used for connections after the first time.  The WiFiQuick.begin() has a default timout of 10 seconds, this can be changed by supplying a time in seconds as its final or only argument depending on how you choose to initiate the connection.  
+This library uses RTC RAM to store all the settings, so it will be saved during sleep as long as power is not lost. This method is much faster than the native Arduino one, which saves some of this information in a special segment of flash. Not only is this method faster, but it also eliminates those write cycles, saving flash wear and lowering power consumption.  The biggest time saver is eliminating the need to do a network scan before connection.  A smaller but still not insignificant amount of time is saved by saving the previously issued ip address, gateway, netmask, and dns server so that dhcp is not used for connections after the first time.  The WiFiQuick.begin() has a default timout of 10 seconds, this can be changed by supplying a time in seconds as its final or only argument depending on how you choose to initiate the connection.  
 ## *Installation*
 ### ArduinoIDE:
 * Clone or download and extract this repository into your Arduino libraries folder.
@@ -77,4 +77,4 @@ Make sure your board is set up to wake from DeepSleep! For example...
  *  D1 Mini > connect D0 to RST.
  *  ESP12-F > connect GPIO16 to RST
  *  ESP01 > see here: https://blog.enbiso.com/post/esp-01-deep-sleep/ to make the necessary modifications.
-    * For this mod I personally like to use conductive paint and a sharp needle to apply it...
+    * For this modification I personally like to use conductive paint and a sharp needle to apply it...
