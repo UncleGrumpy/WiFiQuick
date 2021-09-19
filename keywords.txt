@@ -8,9 +8,6 @@
 
 WiFiQuick KEYWORD1
 rtcData  KEYWORD1
-valid  KEYWORD1
-wifiTime  KEYWORD1
-
 
 #######################################
 # Methods and Functions (KEYWORD2)
@@ -23,7 +20,6 @@ ResetWakes KEYWORD2
 rtcValid  KEYWORD2
 updateRTCcrc  KEYWORD2
 calculateCRC32  KEYWORD2
-rtcOK KEYWORD2
 wifiMissed KEYWORD2
 macAddress KEYWORD2
 
@@ -31,6 +27,9 @@ macAddress KEYWORD2
 # Constants (LITERAL1)
 #######################################
 
+MissedWiFi LITERAL1
+authTimer LITERAL1
+resetCount LITERAL1
 MaxSecs LITERAL1
 crc  LITERAL1
 rstCount  LITERAL1
@@ -39,7 +38,7 @@ channel  LITERAL1
 bssid  LITERAL1
 ssid  LITERAL1
 password  LITERAL1
-MY_SSID  LITERAL1
+myIP  LITERAL1
 PASSWORD  LITERAL1
-startWifi  LITERAL1
-
+_wlStart LITERAL1
+_MissedWiFi LITERAL1

@@ -1,10 +1,10 @@
 /*
     WiFiQuick   (c) 2021 Winford (Uncle Grumpy)
 
-    Library to facilitate fast reconnection to wifi
-    after deep sleep. Uses RTC user memory to store
-    the necessary information to allow connection to
-    the previous wifi network without the expense of
+    Library to facilitate fast reconnection to wifi. 
+    Uses RTC user memory to store the necessary
+    information to allow connection to the previous
+    wifi network without the expense of
     doing a network scan.
 
 */
@@ -84,7 +84,7 @@ uint32_t WiFiQuick::init(const char* ssid, const char* password, IPAddress stati
   if ((rtcValid()) && (nv->rtcMEM.noWifi == 0)) {
     #ifdef WQ_DEBUG
     Serial.print("rtcOK = ");
-    Serial.println(rtcOK);
+    Serial.println(rtcValid());
     #endif
     for (unsigned int mem = 0; mem < 4; mem++) {
       staticIP[mem] = nv->rtcMEM.myIP[mem];
@@ -139,19 +139,6 @@ uint32_t WiFiQuick::init(const char* ssid, const char* password, IPAddress stati
   }
   return _wlStart;
 }
-
-// bool WiFiQuick::begin(const char* ssid, const char* password, uint MaxSecs) {
-//   bool result;
-//   const char* _net = ssid;
-//   const char* _pass = password;
-//   WiFiQuick::init(_net, _pass);
-//   if (WiFiQuick::begin(MaxSecs)) {
-//      result = true;
-//   } else {
-//     result = false;
-//   }
-//   return result;
-// }
 
 bool WiFiQuick::begin(const char* ssid, const char* password, IPAddress staticIP, IPAddress gateway, IPAddress subnet, IPAddress dns, uint MaxSecs) {
   bool result;

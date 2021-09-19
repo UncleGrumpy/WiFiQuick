@@ -33,7 +33,7 @@ class WiFiQuick {
 
     public:
 
-        static uint32_t resetCount;
+        //static uint32_t resetCount;
         static uint32_t MissedWiFi;
         static uint32_t authTimer;
 
