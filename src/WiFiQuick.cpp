@@ -10,27 +10,24 @@
 */
 #include <Arduino.h>
 #ifdef ESP32
-#include <WiFi.h>
-#elif defined(ESP8266)
-#include <ESP8266WiFi.h>
+  #include <WiFi.h>
+#elif ESP8266
+  #include <ESP8266WiFi.h>
+  #include <coredecls.h>
 #endif
-#include <coredecls.h>         // crc32()
+//#include <coredecls.h>         // crc32()
 #include "WiFiQuick.h"
 
 #ifdef WQ_DEBUG
-#define WQ_SERIAL
-#endif
-#ifndef WQ_SERIAL_DISABLE
-#define WQ_SERIAL
+    #define WQ_SERIAL
 #endif
 
-#define WQ_SERIAL_DISABLE
 
 struct nv_s {
   uint8_t OTAbootloaderCMD [128];  // Leave this space free! it is used by ota to install the new bootloader command. 
   uint32_t crc;  // =) Stored outside of the rtcMEM struct so we don't have to wory about offset when we calculate crc32 of the data.
   struct {
-    // Add anything here that you want to save in RTC_USER_MEM. MUST be 4-byte aligned for crc to work!
+    // MUST be 4-byte aligned for crc to work!
     uint32_t rstCount;  // stores the Deep Sleep reset count
     uint32_t noWifi;     // stores the number of consecutive missed connections
     uint32_t channel;    // stores the wifi channel for faster no-scan connetion
@@ -41,19 +38,42 @@ struct nv_s {
     uint32_t wlDNS[4];      // DNS for static connection
     #ifdef ESP32
     uint32_t userData[454];
-    #elif defined(ESP8266)
+    #elif ESP8266
     uint32_t userData[70];
     #endif
   } rtcMEM;
 };
 
-static nv_s* nv = (nv_s*)RTC_USER_MEM; // user RTC RAM area
+#ifdef ESP32
+  static nv_s* nv = (nv_s*)RTC_DATA_ATTR;
+#elif ESP8266
+  static nv_s* nv = (nv_s*)RTC_USER_MEM; // user RTC RAM area
+#endif
 
 uint32_t WiFiQuick::resetCount = 0;
 uint32_t WiFiQuick::_MissedWiFi = 0;
 IPAddress WiFiQuick::_noIP = IPAddress(0,0,0,0);
 uint32_t WiFiQuick::_wlStart = 0;
 uint32_t WiFiQuick::authTimer = 0;
+
+
+uint32_t WiFiQuick::crc32(const uint8_t *data, size_t length) {
+  uint32_t crc = 0xffffffff;
+  while (length--) {
+    uint8_t c = *data++;
+    for (uint32_t i = 0x80; i > 0; i >>= 1) {
+      bool bit = crc & 0x80000000;
+      if (c & i) {
+        bit = !bit;
+      }
+      crc <<= 1;
+      if (bit) {
+        crc ^= 0x04c11db7;
+      }
+    }
+  }
+  return crc;
+}
 
 bool WiFiQuick::updateRTCcrc() {  // updates the reset count CRC
   nv->crc = crc32((uint8_t*)&nv->rtcMEM, sizeof(nv->rtcMEM));
@@ -75,11 +95,18 @@ bool WiFiQuick::rtcValid() {
 uint32_t WiFiQuick::init(const char* ssid, const char* password, IPAddress staticIP, IPAddress gateway, IPAddress subnet, IPAddress dns) {
   _wlStart = millis();
   uint8_t wifiID[6];
-
-  WiFi.forceSleepWake();
+  #ifdef ESP32
+    WiFi.setSleep(false);
+  #elif ESP8266
+    WiFi.forceSleepWake();
+  #endif
   delay(1);
   WiFi.mode(WIFI_STA);
-  WiFi.setOutputPower(10);
+  // #ifdef ESP32
+  //   WiFi.setTxPower(10);
+  // #elif ESP8266
+  //   WiFi.setOutputPower(10);
+  // #endif
   WiFi.persistent(false);   // Dont's save WiFiState to flash we will store it in RTC RAM later.
   if ((rtcValid()) && (nv->rtcMEM.noWifi == 0)) {
     #ifdef WQ_DEBUG
@@ -178,9 +205,7 @@ bool WiFiQuick::begin(uint MaxSecs) {
     #ifdef WQ_SERIAL
     uint32_t reTrySec = 60 * wifiMissed;
     Serial.println();
-    Serial.print("WiFi connect failed. Retry in ");
-    Serial.print(reTrySec);
-    Serial.println(" seconds.");
+    Serial.println("WiFi connect failed.");
     Serial.println();
     delay(1);
     #endif

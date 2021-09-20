@@ -13,12 +13,15 @@
 
 #include <Arduino.h>
 #ifdef ESP32
-#include <WiFi.h>
-#elif defined(ESP8266)
-#include <ESP8266WiFi.h>
+    #include <WiFi.h>
+    #ifndef WL_MAC_ADDR_LENGTH
+        #define WL_MAC_ADDR_LENGTH 6
+    #endif
+#elif ESP8266
+    #include <ESP8266WiFi.h>
+    #include <coredecls.h>
 #endif
-#include <ESP8266WiFi.h>
-#include <coredecls.h>         // crc32()
+//#include <coredecls.h>         // crc32()
 
 
 class WiFiQuick {
@@ -31,6 +34,7 @@ class WiFiQuick {
 
     bool rtcValid(void);
     bool updateRTCcrc(void);
+    uint32_t crc32(const uint8_t *data, size_t length);
 
     public:
 
