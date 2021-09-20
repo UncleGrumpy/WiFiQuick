@@ -18,19 +18,17 @@
 
 #include <WiFiQuick.h>
 
-
-const char* ssid = "NETWORK_NAME";
+uint32_t SleepSecs = 20;    // how long to sleep. 20 seconds default for this demo.
+const char* ssid = "NETWORK";
 const char* password = "PASSWORD";
 IPAddress MYip(192, 168, 82, 66);
 IPAddress MYgateway(192, 168, 0, 1);
 IPAddress MYnetmask(255, 255, 0, 0);
 IPAddress MYdns(192, 168, 0, 1); 
 
-uint32_t SleepSecs = 20;    // how long to sleep. 20 seconds default for this demo.
-
+WiFiQuick WiFiQuick;
 
 void setup() {
-  uint32_t setupStart = millis();
   String resetCause = ESP.getResetReason();
   Serial.begin(115200);
   delay(1000);
@@ -40,9 +38,9 @@ void setup() {
   delay(1);
   Serial.println(resetCause);
   delay(1);
-  UpdateResetCount();
+  WiFiQuick.UpdateWakes();
   Serial.print("run number ");
-  Serial.println(GetResetCount());
+  Serial.println(WiFiQuick.WakeCount());
   delay(1);
 
 
@@ -52,25 +50,27 @@ void setup() {
   // connection a little bit faster than using DHCP to request an IP from the
   // router.  On all connections after the first a static connection is created
   // using the IP settings from the last connection.
-  uint32_t startWifi = WiFiInit(ssid, password, MYip, MYgateway, MYnetmask, MYdns); // this starts the wifi connection.
+  WiFiQuick.init(ssid, password, MYip, MYgateway, MYnetmask, MYdns); // this starts the wifi connection.
   
   /*
    *  you can do some other setup stuff that does not reqire a connection here.
    */
 
-  // you must pass the startWifi returned by WiFiInit and an optional timeout in seconds
-  // (default is 10), if a connection is not completed in this time the device will go to
-  // sleep and try again after 60 seconds multiplied by the number of missed connections.
-
-  WiFiTimeout(startWifi, 15);  // 15 second timeout before giving up on connection.
+  // the timeout argument is optional. default is 10 seconds.
+  WiFiQuick.begin(15);  // 15 second timeout before giving up on connection.
 
 }
 
 void loop() {
   uint32_t nap = SleepSecs * 1e6;
   Serial.println();
+  Serial.print("WiFi connection took: ");
+  Serial.print(WiFiQuick::authTimer);
+  Serial.println("ms.");
+  Serial.println();
   Serial.print("WiFi Signal strength: ");
   Serial.println(WiFi.RSSI());
+  Serial.println("dB.");
   delay(1);
   Serial.print("My IP: ");
   Serial.println(WiFi.localIP());
