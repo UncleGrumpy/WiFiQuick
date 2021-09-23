@@ -15,14 +15,16 @@
   #include <ESP8266WiFi.h>
   #include <coredecls.h>
 #endif
-//#include <coredecls.h>         // crc32()
 #include "WiFiQuick.h"
+
+//#define WQ_DEBUG
+#define WQ_SERIAL
 
 #ifdef WQ_DEBUG
     #define WQ_SERIAL
 #endif
 
-
+#ifdef ESP8266
 struct nv_s {
   uint8_t OTAbootloaderCMD [128];  // Leave this space free! it is used by ota to install the new bootloader command. 
   uint32_t crc;  // =) Stored outside of the rtcMEM struct so we don't have to wory about offset when we calculate crc32 of the data.
@@ -36,99 +38,137 @@ struct nv_s {
     uint32_t wlGateway[4];  // store gateway for static connection
     uint32_t wlSubNet[4];  // subnet for static connection
     uint32_t wlDNS[4];      // DNS for static connection
-    #ifdef ESP32
-    uint32_t userData[454];
-    #elif ESP8266
-    uint32_t userData[70];
-    #endif
+    //uint32_t userData[70];  // possible future usage...
   } rtcMEM;
 };
 
-#ifdef ESP32
-  static nv_s* nv = (nv_s*)RTC_DATA_ATTR;
-#elif ESP8266
   static nv_s* nv = (nv_s*)RTC_USER_MEM; // user RTC RAM area
+
+  uint32_t WiFiQuick::MissedWiFi = nv->rtcMEM.noWifi;
+
+#endif
+
+#ifdef ESP32
+  typedef struct {
+    uint32_t crc;  // =) Stored outside of the rtcMEM struct so we don't have to wory about offset when we calculate crc32 of the data.
+    struct {
+      // MUST be 4-byte aligned for crc to work!
+      uint32_t rstCount;  // stores the Deep Sleep reset count
+      uint32_t noWifi;     // stores the number of consecutive missed connections
+      uint32_t channel;    // stores the wifi channel for faster no-scan connetion
+      uint32_t bssid[6];   // stores mac address of AP for no-san connection
+      uint32_t myIP[4];       // use last IP for faster static (no dhcp delay) connection
+      uint32_t wlGateway[4];  // store gateway for static connection
+      uint32_t wlSubNet[4];  // subnet for static connection
+      uint32_t wlDNS[4];      // DNS for static connection
+    } MEM;
+  } RTC;
+
+  RTC_DATA_ATTR RTC rtc;
+  #ifndef WL_MAC_ADDR_LENGTH
+    #define WL_MAC_ADDR_LENGTH 6
+  #endif
+
+  uint32_t WiFiQuick::MissedWiFi = rtc.MEM.noWifi;
+
 #endif
 
 uint32_t WiFiQuick::resetCount = 0;
-uint32_t WiFiQuick::_MissedWiFi = 0;
-IPAddress WiFiQuick::_noIP = IPAddress(0,0,0,0);
+IPAddress WiFiQuick::useDHCP(0, 0, 0, 0);
 uint32_t WiFiQuick::_wlStart = 0;
 uint32_t WiFiQuick::authTimer = 0;
 
 
-uint32_t WiFiQuick::crc32(const uint8_t *data, size_t length) {
-  uint32_t crc = 0xffffffff;
-  while (length--) {
-    uint8_t c = *data++;
-    for (uint32_t i = 0x80; i > 0; i >>= 1) {
-      bool bit = crc & 0x80000000;
-      if (c & i) {
-        bit = !bit;
-      }
-      crc <<= 1;
-      if (bit) {
-        crc ^= 0x04c11db7;
-      }
-    }
-  }
-  return crc;
+bool WiFiQuick::updateRTCcrc(void) {  // updates the reset count CRC
+  #ifdef ESP32
+    rtc.crc = crc32((uint8_t*)&rtc.MEM, sizeof(rtc.MEM));
+    return rtcValid();
+  #elif ESP8266
+    nv->crc = crc32((uint8_t*)&nv->rtcMEM, sizeof(nv->rtcMEM));
+    return rtcValid();
+  #endif
 }
 
-bool WiFiQuick::updateRTCcrc() {  // updates the reset count CRC
-  nv->crc = crc32((uint8_t*)&nv->rtcMEM, sizeof(nv->rtcMEM));
-  return rtcValid();
-}
-
-bool WiFiQuick::rtcValid() {
+bool WiFiQuick::rtcValid(void) {
   bool valid;
-  // Calculate the CRC of what we just read from RTC memory
-  uint32_t crc = crc32((uint8_t*)&nv->rtcMEM, sizeof(nv->rtcMEM));
-  if( crc != nv->crc ) {
-    valid = false;
-  } else {
-    valid = true;
-  }
+  #ifdef ESP32
+    uint32_t crc = crc32((uint8_t*)&rtc.MEM, sizeof(rtc.MEM));
+    if( crc != rtc.crc ) {
+  #elif ESP8266
+    uint32_t crc = crc32((uint8_t*)&nv->rtcMEM, sizeof(nv->rtcMEM));
+    if( crc != nv->crc ) {
+  #endif
+      valid = false;
+    } else {
+      valid = true;
+    }
   return valid;
 }
 
 uint32_t WiFiQuick::init(const char* ssid, const char* password, IPAddress staticIP, IPAddress gateway, IPAddress subnet, IPAddress dns) {
   _wlStart = millis();
   uint8_t wifiID[6];
+  uint32_t wifiCHAN;
   #ifdef ESP32
     WiFi.setSleep(false);
   #elif ESP8266
     WiFi.forceSleepWake();
   #endif
   delay(1);
+  WiFi.persistent(false);   // Dont's save WiFiState to flash we will store it in RTC RAM later.
   WiFi.mode(WIFI_STA);
   // #ifdef ESP32
   //   WiFi.setTxPower(10);
   // #elif ESP8266
   //   WiFi.setOutputPower(10);
   // #endif
-  WiFi.persistent(false);   // Dont's save WiFiState to flash we will store it in RTC RAM later.
-  if ((rtcValid()) && (nv->rtcMEM.noWifi == 0)) {
+  //WiFi.persistent(false);   // Dont's save WiFiState to flash we will store it in RTC RAM later.
+  if ((rtcValid() == 1) && (WiFiQuick::MissedWiFi == 0)) {
     #ifdef WQ_DEBUG
     Serial.print("rtcOK = ");
     Serial.println(rtcValid());
     #endif
     for (unsigned int mem = 0; mem < 4; mem++) {
-      staticIP[mem] = nv->rtcMEM.myIP[mem];
+      #ifdef ESP32
+        staticIP[mem] = rtc.MEM.myIP[mem];
+      #elif ESP8266
+        staticIP[mem] = nv->rtcMEM.myIP[mem];
+      #endif
     }
     for (unsigned int mem = 0; mem < 4; mem++) {
-      gateway[mem] = nv->rtcMEM.wlGateway[mem];
+      #ifdef ESP32
+        gateway[mem] = rtc.MEM.wlGateway[mem];
+      #elif ESP8266
+        gateway[mem] = nv->rtcMEM.wlGateway[mem];
+      #endif
     }
     for (unsigned int mem = 0; mem < 4; mem++) {
-      subnet[mem] = nv->rtcMEM.wlSubNet[mem];
+      #ifdef ESP32
+        subnet[mem] = rtc.MEM.wlSubNet[mem];
+      #elif ESP8266
+        subnet[mem] = nv->rtcMEM.wlSubNet[mem];
+      #endif
     }
     for (unsigned int mem = 0; mem < 4; mem++) {
-      dns[mem] = nv->rtcMEM.wlDNS[mem];
+      #ifdef ESP32
+        dns[mem] = rtc.MEM.wlDNS[mem];
+      #elif ESP8266
+        dns[mem] = nv->rtcMEM.wlDNS[mem];
+      #endif
     }
     for (unsigned int mem = 0; mem < 6; mem++) {
-      wifiID[mem] = nv->rtcMEM.bssid[mem];
+      #ifdef ESP32
+        wifiID[mem] = rtc.MEM.bssid[mem];
+      #elif ESP8266
+        wifiID[mem] = nv->rtcMEM.bssid[mem];
+      #endif
     }
-    if (staticIP != _noIP) {
+    #ifdef ESP32
+      wifiCHAN = rtc.MEM.channel;
+    #elif ESP8266
+      wifiCHAN = nv->rtcMEM.channel;
+    #endif
+    if (staticIP != WiFiQuick::useDHCP) { // make sure they are not default = 0.0.0.0
       WiFi.config(staticIP, gateway, subnet, dns);
     }
     #ifdef WQ_SERIAL
@@ -137,7 +177,7 @@ uint32_t WiFiQuick::init(const char* ssid, const char* password, IPAddress stati
     #endif
     #ifdef WQ_DEBUG
     Serial.print(" using channel ");
-    Serial.print(nv->rtcMEM.channel);
+    Serial.print(wifiCHAN);
     Serial.print(" and bssid  ");
     for (int mem = 0; mem < 6; mem++ ) {
       Serial.print(wifiID[mem], HEX);
@@ -145,13 +185,13 @@ uint32_t WiFiQuick::init(const char* ssid, const char* password, IPAddress stati
     }
     delay(1);
     #endif
-    WiFi.begin(ssid, password, nv->rtcMEM.channel, wifiID, true);
+    WiFi.begin(ssid, password, wifiCHAN, wifiID, true);
   } else {
     #ifdef WQ_DEBUG
     Serial.print("rtcOK = ");
-    Serial.println(rtcOK);
+    Serial.println(WiFiQuick::rtcValid());
     Serial.print("wifiMissed = ");
-    Serial.println(nv->rtcMEM.noWifi);
+    Serial.println(WiFiQuick::MissedWiFi);
     delay(1);
     #endif
     #ifdef WQ_SERIAL
@@ -159,7 +199,7 @@ uint32_t WiFiQuick::init(const char* ssid, const char* password, IPAddress stati
     Serial.print("Connecting to network");
     delay(1);
     #endif
-    if (staticIP != _noIP) {
+    if (staticIP[0] != WiFiQuick::useDHCP[0] ) {
       WiFi.config(staticIP, gateway, subnet, dns);
     }
     WiFi.begin(ssid, password);
@@ -178,6 +218,17 @@ bool WiFiQuick::begin(const char* ssid, const char* password, IPAddress staticIP
   return result;
 }
 
+bool WiFiQuick::begin(const char* ssid, const char* password, uint MaxSecs) {
+  bool result;
+  WiFiQuick::init(ssid, password);
+  if (WiFiQuick::begin(MaxSecs)) {
+     result = true;
+  } else {
+    result = false;
+  }
+  return result;
+}
+
 bool WiFiQuick::begin(uint MaxSecs) {
   uint32_t wifiMissed;
   uint32_t MaxTimeout = MaxSecs * 1000;
@@ -188,10 +239,11 @@ bool WiFiQuick::begin(uint MaxSecs) {
     Serial.print(".");
     #endif
   }
+  authTimer = millis() - _wlStart;
   if (WiFi.status() != WL_CONNECTED) {
     // char err[] = "WiFi connect failed. Retry in 60 Seconds.";
     delay(1);
-    wifiMissed = nv->rtcMEM.noWifi;  // read the previous wifi fail count
+    wifiMissed = WiFiQuick::MissedWiFi; // read the previous wifi fail count
     delay(1);
     wifiMissed++;
     #ifdef WQ_DEBUG
@@ -199,11 +251,13 @@ bool WiFiQuick::begin(uint MaxSecs) {
     Serial.println(wifiMissed);
     delay(1);
     #endif
-    nv->rtcMEM.noWifi = wifiMissed; // update the missed connection count and save to rtc
+    #ifdef ESP32
+      rtc.MEM.noWifi = wifiMissed; // update the missed connection count and save to rtc
+    #elif ESP8266
+      nv->rtcMEM.noWifi = wifiMissed;
+    #endif
     delay(1);
-    digitalWrite(4, LOW);   // Power off peripherals.
     #ifdef WQ_SERIAL
-    uint32_t reTrySec = 60 * wifiMissed;
     Serial.println();
     Serial.println("WiFi connect failed.");
     Serial.println();
@@ -216,9 +270,12 @@ bool WiFiQuick::begin(uint MaxSecs) {
     WiFi.mode(WIFI_OFF);
     return false;
   } else {
-    nv->rtcMEM.channel = WiFi.channel();
+    #ifdef ESP32
+      rtc.MEM.channel = WiFi.channel();
+    #elif ESP8266
+      nv->rtcMEM.channel = WiFi.channel();
+    #endif
     #ifdef WQ_SERIAL
-    authTimer = millis() - _wlStart;
     Serial.println();
     Serial.print("Connected in ");
     Serial.print(authTimer);
@@ -227,19 +284,35 @@ bool WiFiQuick::begin(uint MaxSecs) {
     #endif
     #ifdef WQ_DEBUG
     Serial.print("Wrote channel #");
-    Serial.println(nv->rtcMEM.channel);
+    #ifdef ESP32
+    Serial.println(rtc.MEM.channel);
+    #elif ESP8266
+      Serial.println(nv->rtcMEM.channel);
+    #endif
     delay(1);
     #endif
-    nv->rtcMEM.noWifi = 0;   // reset missed connection counter.
+    #ifdef ESP32
+      rtc.MEM.noWifi = 0;   // reset missed connection counter.
+    #elif ESP8266
+      nv->rtcMEM.noWifi = 0;
+    #endif
     delay(1);
     uint8_t* bss_id = WiFi.BSSID();
     #ifdef WQ_DEBUG
     Serial.print("Wrote network bssid > ");
     #endif
     for (unsigned int len = 0; len < WL_MAC_ADDR_LENGTH; len++ ) {
-      nv->rtcMEM.bssid[len] = bss_id[len];
+      #ifdef ESP32
+        rtc.MEM.bssid[len] = bss_id[len];
+      #elif ESP8266
+        nv->rtcMEM.bssid[len] = bss_id[len];
+      #endif
       #ifdef WQ_DEBUG
-      Serial.print(nv->rtcMEM.bssid[len], HEX);
+      #ifdef ESP32
+        Serial.print(rtc.MEM.bssid[len], HEX);
+      #elif ESP8266
+        Serial.print(nv->rtcMEM.bssid[len], HEX);
+      #endif
       #endif
     }
     IPAddress staticIP = WiFi.localIP();
@@ -247,16 +320,32 @@ bool WiFiQuick::begin(uint MaxSecs) {
     IPAddress subnet = WiFi.subnetMask();
     IPAddress dns = WiFi.dnsIP();
     for (unsigned int mem = 0; mem < 4; mem++) {
-      nv->rtcMEM.myIP[mem] = staticIP[mem];
+      #ifdef ESP32
+        rtc.MEM.myIP[mem] = staticIP[mem];
+      #elif ESP8266
+        nv->rtcMEM.myIP[mem] = staticIP[mem];
+      #endif
     }
     for (unsigned int mem = 0; mem < 4; mem++) {
-      nv->rtcMEM.wlGateway[mem] = gateway[mem];
+      #ifdef ESP32
+        rtc.MEM.wlGateway[mem] = gateway[mem];
+      #elif ESP8266
+        nv->rtcMEM.wlGateway[mem] = gateway[mem];
+      #endif
     }
     for (unsigned int mem = 0; mem < 4; mem++) {
-      nv->rtcMEM.wlSubNet[mem] = subnet[mem];
+      #ifdef ESP32
+        rtc.MEM.wlSubNet[mem] = subnet[mem];
+      #elif ESP8266
+        nv->rtcMEM.wlSubNet[mem] = subnet[mem];
+      #endif
     }
     for (unsigned int mem = 0; mem < 4; mem++) {
-      nv->rtcMEM.wlDNS[mem] = dns[mem];
+      #ifdef ESP32
+        rtc.MEM.wlDNS[mem] = dns[mem];
+      #elif ESP8266
+        nv->rtcMEM.wlDNS[mem] = dns[mem];
+      #endif
     }
     WiFiQuick::updateRTCcrc();
     #ifdef WQ_DEBUG
@@ -271,41 +360,83 @@ bool WiFiQuick::begin(uint MaxSecs) {
   return true;
 }
 
-void WiFiQuick::UpdateWakes() {
+void WiFiQuick::UpdateWakes(void) {
     if (WiFiQuick::rtcValid()) {
-      WiFiQuick::resetCount = nv->rtcMEM.rstCount;  // read the previous reset count
+      #ifdef ESP32
+        WiFiQuick::resetCount = rtc.MEM.rstCount;  // read the previous reset count
+      #elif ESP8266
+        WiFiQuick::resetCount = nv->rtcMEM.rstCount;
+      #endif
     }
     WiFiQuick::resetCount++;
-    nv->rtcMEM.rstCount = WiFiQuick::resetCount;
-    WiFiQuick::updateRTCcrc();
-}
-
-void WiFiQuick::ResetWakes() {
-    if (WiFiQuick::rtcValid()) {
-      WiFiQuick::resetCount = 0;  // read the previous reset count
+    #ifdef ESP32
+      rtc.MEM.rstCount = WiFiQuick::resetCount;
+    #elif ESP8266
       nv->rtcMEM.rstCount = WiFiQuick::resetCount;
-    }
+    #endif
     WiFiQuick::updateRTCcrc();
 }
 
-uint32_t WiFiQuick::WakeCount() {
-    return nv->rtcMEM.rstCount;
+void WiFiQuick::ResetWakes(void) {
+  if (WiFiQuick::rtcValid()) {
+    #ifdef ESP32
+      rtc.MEM.rstCount = 0;
+    #endif
+    #ifdef ESP8266
+      nv->rtcMEM.rstCount = 0;
+    #endif
+  }
+  WiFiQuick::updateRTCcrc();
+}
+
+uint32_t WiFiQuick::WakeCount(void) {
+    #ifdef ESP32
+      return rtc.MEM.rstCount;
+    #endif
+    #ifdef ESP8266
+      return nv->rtcMEM.rstCount;
+    #endif
 }
 
 uint8_t* WiFiQuick::macAddress(uint8_t* mac) {
-     wifi_get_macaddr(STATION_IF, mac);
+     WiFi.macAddress(mac);
      return mac;
  }
 
  String WiFiQuick::macAddress(void) {
      uint8_t mac[6];
      char macStr[18] = { 0 };
-     wifi_get_macaddr(STATION_IF, mac);
+     WiFi.macAddress(mac);
 
      sprintf(macStr, "%02X:%02X:%02X:%02X:%02X:%02X", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
      return String(macStr);
  }
 
-uint32_t WiFiQuick::wifiMissed() {
-    return nv->rtcMEM.noWifi;
+uint32_t WiFiQuick::wifiMissed(void) {
+    #ifdef ESP32
+      return rtc.MEM.noWifi;
+    #endif
+    #ifdef ESP8266
+      return nv->rtcMEM.noWifi;
+    #endif
 }
+
+#ifdef ESP32
+uint32_t WiFiQuick::crc32(const uint8_t *data, size_t length) {
+  uint32_t crc = 0xffffffff;
+  while (length--) {
+    uint8_t c = *data++;
+    for (uint32_t i = 0x80; i > 0; i >>= 1) {
+      bool bit = crc & 0x80000000;
+      if (c & i) {
+        bit = !bit;
+      }
+      crc <<= 1;
+      if (bit) {
+        crc ^= 0x04c11db7;
+      }
+    }
+  }
+  return crc;
+}
+#endif

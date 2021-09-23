@@ -47,9 +47,9 @@ void onBeforeSwitchStateChanged(bool state, HASwitch* s)
 }
 
 void setup() {
-    WiFiQuick.UpdateWakes(); // incriment the wake counter.
     Serial.begin(115200);
     delay(2000);
+    WiFiQuick.UpdateWakes(); // incriment the wake counter.
     Serial.println();
     delay(5);
     Serial.println();
@@ -63,21 +63,21 @@ void setup() {
     WiFiQuick.begin(ssid, password);
     
     // set device's details
-    device.setName("ESP-D1");
-    device.setSoftwareVersion("0.2.0");
+    device.setName("ESP32-node1");
+    device.setSoftwareVersion("0.2.1");
     device.setManufacturer("Uncle Grumpy");
-    device.setModel("test_001-d1");
+    device.setModel("nodemcu-esp32-s");
 
     // configure sensor
 
     wireless.setUnitOfMeasurement("dB");
     wireless.setIcon("mdi:wifi");
-    wireless.setName("ESP-d1 WiFi Signal");
+    wireless.setName("ESP32-s WiFi Signal");
     timer.setUnitOfMeasurement("ms");
     timer.setIcon("mdi:timer");
-    timer.setName("ESP-d1 Connect Timer");
+    timer.setName("ESP32-s Connect Timer");
     counter.setIcon("mdi:counter");
-    counter.setName("ESP-d1 Wake Counter");
+    counter.setName("ESP32-s Wake Counter");
 
     mqtt.begin(BROKER_ADDR);
     mqtt.loop();  // run this once here to publish device info before sensor readings.
@@ -100,7 +100,13 @@ void loop() {
   delay(1);
   Serial.println();
   delay(1);
-  ESP.deepSleep(nap);
+  #ifdef ESP32
+    esp_sleep_enable_timer_wakeup(nap);
+    esp_deep_sleep_start();
+  #endif
+  #ifdef ESP8266
+    ESP.deepSleep(nap);
+  #endif
   delay(1);    
  
 }

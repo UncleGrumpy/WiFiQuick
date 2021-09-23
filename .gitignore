@@ -36,3 +36,7 @@
 
 #ArduinoIDE artifacts
 tags
+
+#PlatformIO artifacts
+.pio
+

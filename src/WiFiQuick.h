@@ -17,18 +17,16 @@
     #ifndef WL_MAC_ADDR_LENGTH
         #define WL_MAC_ADDR_LENGTH 6
     #endif
+    #define WIFI_NVS_ENABLED 0
 #elif ESP8266
     #include <ESP8266WiFi.h>
     #include <coredecls.h>
 #endif
-//#include <coredecls.h>         // crc32()
 
 
 class WiFiQuick {
 
-    static uint32_t _resetCount;
-    static uint32_t _MissedWiFi;
-    static IPAddress _noIP;
+    static IPAddress useDHCP;
     static uint32_t _wlStart;
     static uint32_t resetCount;
 
@@ -41,9 +39,10 @@ class WiFiQuick {
         static uint32_t MissedWiFi;
         static uint32_t authTimer;
 
-        uint32_t init(const char* ssid, const char* password, IPAddress staticIP=_noIP, IPAddress gateway=_noIP, IPAddress subnet=_noIP, IPAddress dns=_noIP);
+        uint32_t init(const char* ssid, const char* password, IPAddress staticIP=useDHCP, IPAddress gateway=useDHCP, IPAddress subnet=useDHCP, IPAddress dns=useDHCP);
         bool begin(uint MaxSecs=10);
-        bool begin(const char* ssid, const char* password, IPAddress staticIP=_noIP, IPAddress gateway=_noIP, IPAddress subnet=_noIP, IPAddress dns=_noIP, uint MaxSecs=10);
+        bool begin(const char* ssid, const char* password, uint MaxSecs=10);
+        bool begin(const char* ssid, const char* password, IPAddress staticIP=useDHCP, IPAddress gateway=useDHCP, IPAddress subnet=useDHCP, IPAddress dns=useDHCP, uint MaxSecs=10);
         void UpdateWakes(void);
         uint32_t WakeCount(void);
         void ResetWakes(void);

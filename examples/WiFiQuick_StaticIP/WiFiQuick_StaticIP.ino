@@ -29,9 +29,20 @@ IPAddress MYdns(192, 168, 0, 1);
 WiFiQuick WiFiQuick;
 
 void setup() {
-  String resetCause = ESP.getResetReason();
+  #ifdef ESP32
+    esp_sleep_wakeup_cause_t resetWhy;
+    resetWhy = esp_sleep_get_wakeup_cause();
+    String resetCause;
+    if (resetWhy == 4) {
+      resetCause = "Deep-Sleep Wake";
+    } else {
+      resetCause = "Not-Deep-Sleep-Wake";
+    }
+  #elif ESP826
+    String resetCause = ESP.getResetReason();
+  #endif
   Serial.begin(115200);
-  delay(1000);
+  delay(5000);
   Serial.println();
   delay(5);
   Serial.println();
@@ -57,7 +68,9 @@ void setup() {
    */
 
   // the timeout argument is optional. default is 10 seconds.
-  WiFiQuick.begin(15);  // 15 second timeout before giving up on connection.
+  if (!WiFiQuick.begin(20)) {
+    Serial.println("WiFi connection failed!");
+  }  // 15 second timeout before giving up on connection.
 
 }
 
@@ -69,7 +82,7 @@ void loop() {
   Serial.println("ms.");
   Serial.println();
   Serial.print("WiFi Signal strength: ");
-  Serial.println(WiFi.RSSI());
+  Serial.print(WiFi.RSSI());
   Serial.println("dB.");
   delay(1);
   Serial.print("My IP: ");
@@ -77,7 +90,7 @@ void loop() {
   Serial.println();
   delay(1);
 
-  WiFi.disconnect( true );
+  WiFi.disconnect( false );
   delay(1);
   WiFi.mode( WIFI_OFF );
   Serial.print("going to sleep for ");
@@ -86,7 +99,12 @@ void loop() {
   delay(1);
   Serial.println();
   delay(1);
-  ESP.deepSleep(nap);
+  #ifdef ESP32
+    esp_sleep_enable_timer_wakeup(nap);
+    esp_deep_sleep_start();
+  #elif ESP8266
+    ESP.deepSleep(nap);
+  #endif
   delay(1);
 
 }

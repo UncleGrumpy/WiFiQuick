@@ -41,7 +41,18 @@ WiFiQuick WiFiQuick;
 
 void setup() {
   uint32_t setupStart = millis();
-  String resetCause = ESP.getResetReason();
+  #ifdef ESP32
+    esp_sleep_wakeup_cause_t resetWhy;
+    resetWhy = esp_sleep_get_wakeup_cause();
+    String resetCause;
+    if (resetWhy == 4) {
+      resetCause = "Deep-Sleep Wake";
+    } else {
+      resetCause = "Not-Deep-Sleep-Wake";
+    }
+  #elif ESP826
+    String resetCause = ESP.getResetReason();
+  #endif
   Serial.begin(115200);
   delay(2000);
   Serial.println();
@@ -63,7 +74,7 @@ void setup() {
   // delays to give plenty of time for the wireless to do its thing in the background.
   WiFiQuick.init(ssid, password); // this starts the wifi connection.
 
-  // you can do some other setup stuff that does not reqire a connection here.
+  // you can do some other setup stuff that does not require a connection here.
 
   // Port defaults to 8266
   // ArduinoOTA.setPort(8266);
@@ -152,7 +163,12 @@ void loop() {
     Serial.println();
     Serial.println();
     delay(1);
-    ESP.deepSleep(nap, RF_DISABLED);
+    #ifdef ESP32
+      esp_sleep_enable_timer_wakeup(nap);
+      esp_deep_sleep_start();
+    #elif ESP8266
+      ESP.deepSleep(nap, RF_DISABLED);
+    #endif
     delay(1);
   }
   
