@@ -18,7 +18,7 @@
 #include "WiFiQuick.h"
 
 //#define WQ_DEBUG
-#define WQ_SERIAL
+//#define WQ_SERIAL
 
 #ifdef WQ_DEBUG
     #define WQ_SERIAL
@@ -123,7 +123,7 @@ uint32_t WiFiQuick::init(const char* ssid, const char* password, IPAddress stati
   //   WiFi.setOutputPower(10);
   // #endif
   //WiFi.persistent(false);   // Dont's save WiFiState to flash we will store it in RTC RAM later.
-  if ((rtcValid() == 1) && (WiFiQuick::MissedWiFi == 0)) {
+  if ((rtcValid() == true) && (WiFiQuick::MissedWiFi == 0)) {
     #ifdef WQ_DEBUG
     Serial.print("rtcOK = ");
     Serial.println(rtcValid());
@@ -199,7 +199,7 @@ uint32_t WiFiQuick::init(const char* ssid, const char* password, IPAddress stati
     Serial.print("Connecting to network");
     delay(1);
     #endif
-    if (staticIP[0] != WiFiQuick::useDHCP[0] ) {
+    if (staticIP != WiFiQuick::useDHCP) {
       WiFi.config(staticIP, gateway, subnet, dns);
     }
     WiFi.begin(ssid, password);
@@ -361,20 +361,24 @@ bool WiFiQuick::begin(uint MaxSecs) {
 }
 
 void WiFiQuick::UpdateWakes(void) {
-    if (WiFiQuick::rtcValid()) {
-      #ifdef ESP32
-        WiFiQuick::resetCount = rtc.MEM.rstCount;  // read the previous reset count
-      #elif ESP8266
-        WiFiQuick::resetCount = nv->rtcMEM.rstCount;
-      #endif
-    }
-    WiFiQuick::resetCount++;
+  bool UpdateSafe = false;
+  if (WiFiQuick::rtcValid() == true ) {
     #ifdef ESP32
-      rtc.MEM.rstCount = WiFiQuick::resetCount;
+      WiFiQuick::resetCount = rtc.MEM.rstCount;  // read the previous reset count
     #elif ESP8266
-      nv->rtcMEM.rstCount = WiFiQuick::resetCount;
+      WiFiQuick::resetCount = nv->rtcMEM.rstCount;
     #endif
+    UpdateSafe = true;
+  }
+  WiFiQuick::resetCount++;
+  #ifdef ESP32
+    rtc.MEM.rstCount = WiFiQuick::resetCount;
+  #elif ESP8266
+    nv->rtcMEM.rstCount = WiFiQuick::resetCount;
+  #endif
+  if ( UpdateSafe == true) {
     WiFiQuick::updateRTCcrc();
+  }
 }
 
 void WiFiQuick::ResetWakes(void) {
