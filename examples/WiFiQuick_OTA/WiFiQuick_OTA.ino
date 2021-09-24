@@ -41,17 +41,17 @@ WiFiQuick WiFiQuick;
 
 void setup() {
   uint32_t setupStart = millis();
+  String resetCause;
   #ifdef ESP32
     esp_sleep_wakeup_cause_t resetWhy;
     resetWhy = esp_sleep_get_wakeup_cause();
-    String resetCause;
     if (resetWhy == 4) {
       resetCause = "Deep-Sleep Wake";
     } else {
       resetCause = "Not-Deep-Sleep-Wake";
     }
   #elif ESP826
-    String resetCause = ESP.getResetReason();
+    resetCause = ESP.getResetReason();
   #endif
   Serial.begin(115200);
   delay(2000);
