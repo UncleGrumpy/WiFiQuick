@@ -20,7 +20,6 @@
     #define WIFI_NVS_ENABLED 0
 #elif ESP8266
     #include <ESP8266WiFi.h>
-    //#include <coredecls.h>
 #endif
 
 
@@ -31,9 +30,8 @@ class WiFiQuick {
         static uint32_t MissedWiFi;
         static uint32_t authTimer;
         uint32_t init(const char* ssid, const char* password, IPAddress staticIP=useDHCP, IPAddress gateway=useDHCP, IPAddress subnet=useDHCP, IPAddress dns=useDHCP);
-        bool begin(uint MaxSecs=10);
-        bool begin(const char* ssid, const char* password, uint MaxSecs=10);
-        bool begin(const char* ssid, const char* password, IPAddress staticIP=useDHCP, IPAddress gateway=useDHCP, IPAddress subnet=useDHCP, IPAddress dns=useDHCP, uint MaxSecs=10);
+        bool begin(uint8_t MaxSecs=10);
+        bool begin(const char* ssid, const char* password, IPAddress staticIP=useDHCP, IPAddress gateway=useDHCP, IPAddress subnet=useDHCP, IPAddress dns=useDHCP, uint8_t MaxSecs=10);
         bool disconnect(void);
         void UpdateWakes(void);
         uint32_t WakeCount(void);
@@ -46,9 +44,7 @@ class WiFiQuick {
         static uint32_t _wlStart;
         static uint32_t resetCount;
         bool useRTC;
-        //bool rtcValid(void);
-        //bool updateRTCcrc(void);
-        //uint32_t crc32(const uint8_t *data, size_t length);      
+        uint8_t _MaxSecs;     
 };
 
 #endif

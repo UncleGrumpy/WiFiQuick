@@ -14,7 +14,6 @@
   #include <WiFi.h>
 #elif ESP8266
   #include <ESP8266WiFi.h>
-  //#include <coredecls.h>
 #endif
 
 //#define WQ_DEBUG
@@ -84,8 +83,8 @@ IPAddress WiFiQuick::useDHCP(0, 0, 0, 0);
 uint32_t WiFiQuick::_wlStart = 0;
 uint32_t WiFiQuick::authTimer = 0;
 
-WiFiQuick::WiFiQuick() : useRTC(false) {}
-WiFiQuick::~WiFiQuick() {}
+WiFiQuick::WiFiQuick() : useRTC(false), _MaxSecs(10) {};
+WiFiQuick::~WiFiQuick() {};
 
 bool updateRTCcrc(void) {  // updates the reset count CRC
   #ifdef ESP32
@@ -217,7 +216,7 @@ uint32_t WiFiQuick::init(const char* ssid, const char* password, IPAddress stati
   return _wlStart;
 }
 
-bool WiFiQuick::begin(const char* ssid, const char* password, IPAddress staticIP, IPAddress gateway, IPAddress subnet, IPAddress dns, uint MaxSecs) {
+bool WiFiQuick::begin(const char* ssid, const char* password, IPAddress staticIP, IPAddress gateway, IPAddress subnet, IPAddress dns, uint8_t MaxSecs) {
   bool result;
   WiFiQuick::init(ssid, password, staticIP, gateway, subnet, dns);
   if (WiFiQuick::begin(MaxSecs)) {
@@ -228,18 +227,7 @@ bool WiFiQuick::begin(const char* ssid, const char* password, IPAddress staticIP
   return result;
 }
 
-bool WiFiQuick::begin(const char* ssid, const char* password, uint MaxSecs) {
-  bool result;
-  WiFiQuick::init(ssid, password);
-  if (WiFiQuick::begin(MaxSecs)) {
-     result = true;
-  } else {
-    result = false;
-  }
-  return result;
-}
-
-bool WiFiQuick::begin(uint MaxSecs) {
+bool WiFiQuick::begin(uint8_t MaxSecs) {
   uint32_t wifiMissed;
   uint32_t MaxTimeout = MaxSecs * 1000;
   uint32_t GiveUp = _wlStart + MaxTimeout;   // 10 seconds max before giving up.
@@ -436,7 +424,6 @@ uint32_t WiFiQuick::wifiMissed(void) {
     #endif
 }
 
-// #ifdef ESP32
 uint32_t crc32(const uint8_t *data, size_t length) {
   uint32_t crc = 0xffffffff;
   while (length--) {
@@ -454,5 +441,3 @@ uint32_t crc32(const uint8_t *data, size_t length) {
   }
   return crc;
 }
-// #endif
-
