@@ -30,7 +30,7 @@ void setup() {
   String resetCause;
   #ifdef ESP32
     esp_sleep_wakeup_cause_t resetWhy;
-    uint8_t resetWhy = esp_sleep_get_wakeup_cause();
+    resetWhy = esp_sleep_get_wakeup_cause();
     if (resetWhy == 4) {
     resetCause = "Deep-Sleep Wake";
     } else {
