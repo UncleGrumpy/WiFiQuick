@@ -48,7 +48,7 @@ void onBeforeSwitchStateChanged(bool state, HASwitch* s)
 
 void setup() {
     Serial.begin(115200);
-    delay(2000);
+    delay(5000);
     WiFiQuick.UpdateWakes(); // incriment the wake counter.
     Serial.println();
     delay(5);

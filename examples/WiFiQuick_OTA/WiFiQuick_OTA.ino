@@ -54,7 +54,7 @@ void setup() {
     resetCause = ESP.getResetReason();
   #endif
   Serial.begin(115200);
-  delay(2000);
+  delay(5000);
   Serial.println();
   delay(5);
   Serial.println();
