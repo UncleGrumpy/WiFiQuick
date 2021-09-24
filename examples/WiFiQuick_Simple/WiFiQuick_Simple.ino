@@ -19,7 +19,7 @@
 #include <WiFiQuick.h>
 
 
-const char* ssid = "NETWORK_NAME";
+const char* ssid = "NETWORK";
 const char* password = "PASSWORD";
 uint32_t SleepSecs = 20;    // how long to sleep. 20 seconds default for this demo.
 
@@ -27,12 +27,16 @@ WiFiQuick WiFiQuick;
 
 
 void setup() {
-  String resetCause = ESP.getResetReason();
+  #ifdef ESP32
+    esp_sleep_wakeup_cause_t resetCause;
+    resetCause = esp_sleep_get_wakeup_cause();
+  #elif ESP8266
+    String resetCause = ESP.getResetReason();
+  #endif
   Serial.begin(115200);
   delay(1000);
   Serial.println();
   delay(5);
-  Serial.println();
   delay(1);
   Serial.println(resetCause);
   delay(1);
@@ -71,7 +75,11 @@ void loop() {
   delay(1);
   Serial.println();
   delay(1);
-  ESP.deepSleep(nap);
+  #ifdef ESP32
+    esp_sleep_enable_timer_wakeup(nap);
+    esp_deep_sleep_start();
+  #elif ESP8266
+    ESP.deepSleep(nap);
+  #endif
   delay(1);
-
 }

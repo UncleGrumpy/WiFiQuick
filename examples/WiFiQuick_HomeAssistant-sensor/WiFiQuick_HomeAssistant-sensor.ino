@@ -25,16 +25,20 @@ uint32_t SleepSecs = 30;
 const char* ssid = "NETWORK";
 const char* password = "PASSWORD";
 #define BROKER_ADDR IPAddress(192,168,0,3)
+#ifndef WL_MAC_ADDR_LENGTH
+  #define WL_MAC_ADDR_LENGTH 6
+#endif
 
 unsigned long lastSentAt = millis();
 double lastValue = 0;
-ADC_MODE(ADC_VCC);
+
 
 WiFiClient client;
 HADevice device;
 HAMqtt mqtt(client, device);
 HASensor wireless("ESP-WiFi-Signal"); // "wireless" is unique ID of the sensor. You should define your own ID.
 HASensor timer("ESP-Connect-Timer");
+HASensor counter("ESP-Wake-Counter");
 
 void onBeforeSwitchStateChanged(bool state, HASwitch* s)
 {
@@ -45,6 +49,7 @@ void onBeforeSwitchStateChanged(bool state, HASwitch* s)
 void setup() {
     Serial.begin(115200);
     delay(2000);
+    WiFiQuick.UpdateWakes(); // incriment the wake counter.
     Serial.println();
     delay(5);
     Serial.println();
@@ -58,30 +63,34 @@ void setup() {
     WiFiQuick.begin(ssid, password);
     
     // set device's details
-    device.setName("ESP-D1");
-    device.setSoftwareVersion("0.2.0");
+    device.setName("ESP32-node1");
+    device.setSoftwareVersion("0.2.1");
     device.setManufacturer("Uncle Grumpy");
-    device.setModel("test-d1");
+    device.setModel("nodemcu-esp32-s");
 
     // configure sensor
 
     wireless.setUnitOfMeasurement("dB");
     wireless.setIcon("mdi:wifi");
-    wireless.setName("ESP WiFi Signal");
+    wireless.setName("ESP32-s WiFi Signal");
     timer.setUnitOfMeasurement("ms");
     timer.setIcon("mdi:timer");
-    timer.setName("ESP Connect Timer");
+    timer.setName("ESP32-s Connect Timer");
+    counter.setIcon("mdi:counter");
+    counter.setName("ESP32-s Wake Counter");
 
     mqtt.begin(BROKER_ADDR);
+    mqtt.loop();  // run this once here to publish device info before sensor readings.
 }
 
 void loop() {
-  mqtt.loop();
+  //mqtt.loop();
   uint32_t nap = SleepSecs * 1e6;
   float sigLevel = WiFi.RSSI();
 
   wireless.setValue(sigLevel);
   timer.setValue(WiFiQuick::authTimer);
+  counter.setValue(WiFiQuick.WakeCount());
   delay(10);
   mqtt.loop();
   delay(1000);
@@ -91,7 +100,13 @@ void loop() {
   delay(1);
   Serial.println();
   delay(1);
-  ESP.deepSleep(nap);
+  #ifdef ESP32
+    esp_sleep_enable_timer_wakeup(nap);
+    esp_deep_sleep_start();
+  #endif
+  #ifdef ESP8266
+    ESP.deepSleep(nap);
+  #endif
   delay(1);    
  
 }
