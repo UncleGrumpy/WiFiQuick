@@ -35,5 +35,5 @@ jobs:
           arduino-board-fqbn: esp32:esp32:esp32
           platform-default-url: https://dl.espressif.com/dl/package_esp32_index.json
           required-libraries:
-          - https://github.com/dawidchyrzynski/arduino-home-assistant
-          - https://github.com/knolleary/pubsubclient
+          - PubSubClient
+          - home-assistant-integration
