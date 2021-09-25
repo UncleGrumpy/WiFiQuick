@@ -12,6 +12,9 @@
 #include "WiFiQuick.h"
 #ifdef ESP32
   #include <WiFi.h>
+  extern "C" {
+    #include <esp_wifi.h>
+  }
 #elif ESP8266
   #include <ESP8266WiFi.h>
 #endif
@@ -83,8 +86,8 @@ IPAddress WiFiQuick::useDHCP(0, 0, 0, 0);
 uint32_t WiFiQuick::_wlStart = 0;
 uint32_t WiFiQuick::authTimer = 0;
 
+
 WiFiQuick::WiFiQuick() : useRTC(false), _MaxSecs(10) {};
-WiFiQuick::~WiFiQuick() {};
 
 bool updateRTCcrc(void) {  // updates the reset count CRC
   #ifdef ESP32
@@ -116,9 +119,9 @@ uint32_t WiFiQuick::init(const char* ssid, const char* password, IPAddress stati
   _wlStart = millis();
   uint8_t wifiID[6];
   uint32_t wifiCHAN;
-  WiFi.persistent(false);
   #ifdef ESP32
     WiFi.setSleep(false);
+    esp_wifi_set_storage(WIFI_STORAGE_RAM);
   #elif ESP8266
     WiFi.forceSleepWake();
   #endif
@@ -194,7 +197,9 @@ uint32_t WiFiQuick::init(const char* ssid, const char* password, IPAddress stati
     delay(1);
     #endif
     WiFi.persistent(false);   // Dont's save WiFiState to flash we will store it in RTC RAM later.
-    WiFi.begin(ssid, password, wifiCHAN, wifiID, true);
+    if (WiFi.status() != WL_CONNECTED) {
+      WiFi.begin(ssid, password, wifiCHAN, wifiID, true);
+    }
   } else {
     #ifdef WQ_DEBUG
     Serial.print("rtcOK = ");
@@ -211,7 +216,9 @@ uint32_t WiFiQuick::init(const char* ssid, const char* password, IPAddress stati
     if (IPAddress(staticIP) != WiFiQuick::useDHCP) {
       WiFi.config(staticIP, gateway, subnet, dns);
     }
-    WiFi.begin(ssid, password);
+    if (WiFi.status() != WL_CONNECTED) {
+      WiFi.begin(ssid, password);
+    }
   }
   return _wlStart;
 }
