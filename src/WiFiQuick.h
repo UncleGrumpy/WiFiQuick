@@ -17,7 +17,6 @@
     #ifndef WL_MAC_ADDR_LENGTH
         #define WL_MAC_ADDR_LENGTH 6
     #endif
-    #define WIFI_NVS_ENABLED 0
 #elif ESP8266
     #include <ESP8266WiFi.h>
 #endif
@@ -26,7 +25,6 @@
 class WiFiQuick {
     public:
         WiFiQuick();
-        ~WiFiQuick();
         static uint32_t MissedWiFi;
         static uint32_t authTimer;
         uint32_t init(const char* ssid, const char* password, IPAddress staticIP=useDHCP, IPAddress gateway=useDHCP, IPAddress subnet=useDHCP, IPAddress dns=useDHCP);
